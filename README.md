@@ -1,5 +1,5 @@
 # Aberdeen AKI phenotyping algorithm guide
-Algorithm, metadata and resources for AKI phenotyping in EHR data
+
 
 |Index	|	|
 |------------- | -------------|
