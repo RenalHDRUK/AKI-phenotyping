@@ -1,9 +1,8 @@
-# AKI-phenotyping
+# Aberdeen AKI phenotyping algorithm guide
 Algorithm, metadata and resources for AKI phenotyping in EHR data
 
 ## Index
 
-| |  |
 |------------- | -------------|
 What does the Aberdeen AKI phenotyping algorithm code do?	|1|
 |What prerequisite data are needed?	|1|
@@ -55,23 +54,24 @@ Only one creatinine for each sample date should be provided. This is because the
 The algorithm “do” file contains lines of explanation embedded within it. We also recommend first working with the mock data file provided before analysing test data. This is a fictitious dataset manually created to ensure that the algorithm code file is used and interpreted correctly.
 A series of new indicator variables are created by the algorithm to identify and arrange tests with specific properties. Key variables are described below.
 
-newAKI 		Indicates that this test satisfies one of the AKI criteria
-AKImonth 		Indicates that this test satisfies the 8-90 day AKI criterion
-AKIyear 		Indicates that this test satisfies the 91-365 day AKI criterion
-AKIweek 		Indicates that this test satisfies the 7 day AKI criterion
-AKIday 		indicates that this test satisfies the 2 day AKI criterion
+|Name | Meaning |  
+|------------- | -------------| 
+newAKI 	|	Indicates that this test satisfies one of the AKI criteria|
+AKImonth |		Indicates that this test satisfies the 8-90 day AKI criterion|
+AKIyear |		Indicates that this test satisfies the 91-365 day AKI criterion|
+AKIweek |		Indicates that this test satisfies the 7 day AKI criterion|
+AKIday 	|	indicates that this test satisfies the 2 day AKI criterion|
+firstAKI |	The first AKI test that meets any AKI criteria for a given individual: “count if firstAKI==1”|
+AKIcounter|	The AKI episode count (number of complete AKI episodes up to that point, including the one in progress): “tab AKIcounter if firstAKI==1”|
+AKIspellcounter |	The AKI duration (number of AKI blood tests up to that point within the episode in progress). Can be used to count the number of AKI episodes in a time period: “count if AKIspellcounter==1 & year(dos)==2003”|
 
-firstAKI 	Tthe first AKI test that meets any AKI criteria for a given individual: “count if firstAKI==1”
-AKIcounter	The AKI episode count (number of complete AKI episodes up to that point, including the one in progress): “tab AKIcounter if firstAKI==1”
-AKIspellcounter 	The AKI duration (number of AKI blood tests up to that point within the episode in progress). Can be used to count the number of AKI episodes in a time period: “count if AKIspellcounter==1 & year(dos)==2003”
-
-AKIrefGFR	Reference eGFR for the first AKI episode in the index year for those with at least one AKI episode (combine with “if firstAKI==1 to isolate one result per individual). “sum AKIrefGFR if firstAKI==1”
-refGFRgroup		Categorical version of the reference eGFR
-AKIN	AKI episode severity stage for the first AKI episode in the index year for those with at least one AKI episode: “tab AKINdx if firstAKI==1”
-AKINdx	Initial AKI episode severity stage for the first AKI episode in the index year for those with at least one AKI episode when measured at the time of the first test meeting AKI criteria (i.e. using the first not the highest creatinine of the episode): “tab AKINdx if firstAKI==1”
-prevAKIcount	Number of previous AKI episodes at the time of an AKI episode
-priorAKI1yr	Presence of a prior AKI episode within one year (use “tab priorAKI 1yr if firstAKI==1” to identify those whose AKI episode is a recurrence within the past year.
-recovery	Metric of renal recovery to within 1.2 x baseline creatinine (1=recovery 0=non-recovery 2=untested): “tab recovery if firstAKI==1”
+AKIrefGFR|	Reference eGFR for the first AKI episode in the index year for those with at least one AKI episode (combine with “if firstAKI==1 to isolate one result per individual). “sum AKIrefGFR if firstAKI==1”|
+refGFRgroup	|	Categorical version of the reference eGFR|
+AKIN|	AKI episode severity stage for the first AKI episode in the index year for those with at least one AKI episode: “tab AKINdx if firstAKI==1”|
+AKINdx|	Initial AKI episode severity stage for the first AKI episode in the index year for those with at least one AKI episode when measured at the time of the first test meeting AKI criteria (i.e. using the first not the highest creatinine of the episode): “tab AKINdx if firstAKI==1”|
+prevAKIcount|	Number of previous AKI episodes at the time of an AKI episode|
+priorAKI1yr|	Presence of a prior AKI episode within one year (use “tab priorAKI 1yr if firstAKI==1” to identify those whose AKI episode is a recurrence within the past year.|
+recovery|	Metric of renal recovery to within 1.2 x baseline creatinine (1=recovery 0=non-recovery 2=untested): “tab recovery if firstAKI==1”|
 
 ## Are there any lines of code I should edit prior to use?
 The code is written to follow individuals from 1st January 2000, through an index year of 2003, describing the first AKI episode of 2003 for those who develop AKI”. To change the dates of follow up you will need to update lines 71 to 75. You may also wish to create a different variable to substitute “yr03”, which is an indicator variable to filter out any blood tests not from 2003 for certain calculations.
