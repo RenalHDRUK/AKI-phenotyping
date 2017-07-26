@@ -3,7 +3,7 @@
 
 |Index	|	|
 |------------- | -------------|
-[What does the Aberdeen AKI phenotyping algorithm code do?](##what-does-the-aberdeen-aki-phenotyping-algorithm-code-do?)	|1|
+[What does the Aberdeen AKI phenotyping algorithm code do?](##What-does-the-Aberdeen-AKI-phenotyping-algorithm-code-do?)	|1|
 |What prerequisite data are needed?	|1|
 |What are the caveats?	|1|
 |How should my data be organised?	|2|
@@ -14,7 +14,7 @@
 |Mock data outputs: dataset details	|6|
 |Mock data outputs: AKI events and phenotypes	|7|
 
-(##What-does-the-Aberdeen-AKI-phenotyping-algorithm-code-do?)
+## What does the Aberdeen AKI phenotyping algorithm code do?
 The “do” file code flags blood tests that are consistent with AKI based on a comparison with previous tests. It also arranges the flagged tests so that start points of discrete episodes can be identified and each episode can be phenotyped with respect to baseline, severity, recovery and recurrence. 
 
 ## What prerequisite data are needed?
