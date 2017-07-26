@@ -107,7 +107,7 @@ Please carefully confirm your interpretation of the outputs matches that describ
 ## Mock data outputs: dataset details
 
 |Output	|Patient total	|% of total	|
-|------------- | -------------|	
+|------------- | -------------| -------------|
 Adult serum creatinine samples analysed in index year	|864	|100|
 Number of non-RRT samples in index year|	793|	91.78|
 Number of samples in index year after the duplicate and non-RRT samples removed|	746|	81.60|
