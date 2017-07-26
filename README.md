@@ -4,15 +4,15 @@
 |Index	|	|
 |------------- | -------------|
 [What does the Aberdeen AKI phenotyping algorithm code do?](#what-does-the-aberdeen-aki-phenotyping-algorithm-code-do)	|1|
-|What prerequisite data are needed?	|1|
-|What are the caveats?	|1|
-|How should my data be organised?	|2|
-|Which of the generated variables should I use?	|3|
-|Are there any lines of code I should edit prior to use?	|4|
-|How do I know if I have interpreted the output correctly?	|4|
-|Guide to Mock data outputs	|5|
-|Mock data outputs: dataset details	|6|
-|Mock data outputs: AKI events and phenotypes	|7|
+|[What prerequisite data are needed?](#what-prerequisite-data-are-needed?)	|1|
+|[What are the caveats?](#what-are-the-caveats?)	|1|
+|[How should my data be organised?](#how-should-my-data-be-organised)	|2|
+|[Which of the generated variables should I use?](#which-of-the-generated-variables-should-I-use?)	|3|
+|[Are there any lines of code I should edit prior to use?](#are-there-any-lines-of-code-I-should-edit-prior-to-use?)	|4|
+|[How do I know if I have interpreted the output correctly?](#how-do-i-know-if-I-have-interpreted-the-output-correctly?)	|4|
+|[Guide to Mock data outputs](#guide-to-mock-data-outputs)	|5|
+|[Mock data outputs: dataset details](#mock-data-outputs:-dataset-details)	|6|
+|[Mock data outputs: AKI events and phenotypes](#mock-data-outputs:-AKI-events-and-phenotypes)	|7|
 
 ## What does the Aberdeen AKI phenotyping algorithm code do?
 The “do” file code flags blood tests that are consistent with AKI based on a comparison with previous tests. It also arranges the flagged tests so that start points of discrete episodes can be identified and each episode can be phenotyped with respect to baseline, severity, recovery and recurrence. 
