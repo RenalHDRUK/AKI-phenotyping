@@ -100,12 +100,12 @@ Number of samples in index year after the duplicate and non-RRT samples removed|
 Number of (non rrt) individuals with a creatinine test in index year 	38||	100|
 		
 |Sex	|Patient total	|% of total	|
-|------------- | -------------| 
+|------------- | -------------| -------------|
 females	|19	|50	|
 males	|19	|50	|
 		
 |Age	|Patient total	|% of total	|
-|------------- | -------------| 		
+|------------- | -------------| -------------|		
 Age ≥70 years	|16	|42.1	|
 Age 40-69 years	|19	|50	|
 Age 15-39 years	|3	|7.9	|
