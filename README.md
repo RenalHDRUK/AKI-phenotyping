@@ -23,14 +23,14 @@ Your dataset should contain as a minimum the following variables named as below:
 
 |Name | Description | Format |  
 |------------- | -------------|------------|  
-|studyid |		unique id number for each individual|(integer)|
-|dos 	|		date of each sample| (numerical)|
-|stcreat |		idms aligned serum creatinine (micromol/L)|(numerical)|
-|mdrd 	|		4 variable MDRD eGFR (ml/min/1.73m2)|(numerical)|
-|sex 	|		male=1 female=0| (binary)|
-|age 	|		age in years at time of sample|(integer)|
-|Optional:|	|
-|location_code| 	inpatient/outpatient/community sample |(categorical)|
+studyid |		unique id number for each individual|(integer)|
+dos 	|		date of each sample| (numerical)|
+stcreat |		idms aligned serum creatinine (micromol/L)|(numerical)|
+mdrd 	|		4 variable MDRD eGFR (ml/min/1.73m2)|(numerical)|
+sex 	|		male=1 female=0| (binary)|
+age 	|		age in years at time of sample|(integer)|
+Optional:|	|
+location_code| 	inpatient/outpatient/community sample |(categorical)|
 
 ## What are the caveats?
 Ultimately the code will only provide reasonable outputs if the variables are recorded, extracted and prepared correctly. Outputs should be interpreted in light of the data source’s limitations, and therefore an absence of event flags should not be considered confirmation of condition absence.
