@@ -1,9 +1,7 @@
 # Aberdeen AKI phenotyping algorithm guide
 Algorithm, metadata and resources for AKI phenotyping in EHR data
 
-## Index
-
-|	|	|
+|Index	|	|
 |------------- | -------------|
 What does the Aberdeen AKI phenotyping algorithm code do?	|1|
 |What prerequisite data are needed?	|1|
