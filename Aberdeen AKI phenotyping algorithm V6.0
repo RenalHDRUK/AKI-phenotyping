@@ -1,0 +1,609 @@
+DO NOT DELETE THIS LINE
+
+set more off
+
+*This is an edited version of AKI discrete episode code as previously described in Sawhney, S., Marks, A., Fluck, N., Levin, A., Prescott, G. & Black, C. (2017). 'Intermediate and Long-Term Outcomes of Survivors of Acute Kidney Injury Episodes: A Large Population-Based Cohort Study'. American Journal of Kidney Diseases, vol 69, no. 1, pp. 18-28. DOI: 10.1053/J.AJKD.2016.05.018
+*The orginal version included multiple different definitions using different look-backs, look-forwards, approaches to ranking baseline values
+*This code is only one interpretation of the KDIGO AKI criteria, but is readily editable.
+*It cannot be applied directly to the current NHS England AKI warning algorithm, because the use here of a 8-90-365 hierarchical criterion results in different categorisations.
+*This code uses lab reported MDRD eGFR for baseline eGFR values, but MDRD and CKD-EPI can be interchanged by editing the text.
+
+
+*Please see the read me file for details of how to cite this file
+
+
+
+
+******************************************************************************************************
+**** PART 0 - INITIAL VARIABLE CHECKLIST
+******************************************************************************************************
+
+
+*Below is a list of the variables that you should have and how they should be named
+
+*studyid = unique id number for patient
+*dos = date of sample
+*stcreat = idms standardised creatinine
+*mdrd = mdrd eGFR
+*sex = male=1 female=0
+*age = age in years at time of sample
+*location_code = inpatient or outpatient sample
+
+
+
+*BEFORE YOU START...
+* 1 PLEASE ENSURE THAT YOUR DATA FILE CONTAINS ONLY STANDARDISED SERUM/BLOOD CREATININE RESULTS (NO OTHER BIOCHEMISTRY) 
+* 2 PLEASE ENSURE THAT NO SAMPLES FOR PEOPLE BELOW THREHOLD AGE FOR STUDY ARE INCLUDED (E.G. 18 YEARS)
+* 3 PLEASE CHECK THAT ALL SAMPLES AFTER PATIENTS HAVE STARTED CHRONIC (LONG TERM) RRT HAVE BEEN REMOVED
+
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 1 - CHECK AND ORGANISE VARIABLES
+******************************************************************************************************
+
+*This section ensures dates are formated %td
+*Also destrings any numeric variables (if destring does not work, check the extreme values are not truncated, e.g. "<10")
+*You need to decide either to study only the highest creatinine each day, or ensure that your sample time is reliable
+*The code below focuses only on the highest creatinine each day... (the next lines create a new creatinine variable and drops the other samples that occurred on the same day)
+
+duplicates tag studyid  dos, gen(dup)
+gen dupyn=dup>=1
+tab dupyn
+ren stcreat oldstcreat
+gsort studyid dos -oldstcreat
+by studyid dos: gen n=_n
+gen newstcreat=oldstcreat if n==1
+ren newstcreat stcreat
+drop if stcreat==.
+
+
+
+***GENERATE A "PROTAGONIST" VARIABLE THAT IS THE CUMULATIVE COUNT OF EACH BLOOD SAMPLE AFTER JANUARY 1st 2000
+
+*HERE 2003 IS THE INCIDENT YEAR; AND COLLECTED AKI EPISODES FROM 2000 AS PRIOR EPISODES (THIS CAN BE CHANGED)
+
+gen yr3=1 if year(dos)==2003
+label var yr3 "sample from 2003"
+gen post2000=1 if dos>=14610
+label var post2000 "sample after 1st jan 2000"
+bysort studyid post2000 (dos): gen protagonist=_n if post2000==1
+tabstat protagonist, stat (n, mean, median, min, max)
+*the maximum value of "protagonist is the number of times you need to do your loop to ensure each sample is compared with all others.
+
+
+label var studyid "unique id number for patient"
+label var dos "date of sample"
+label var stcreat "idms standardised creatinine"
+label var mdrd "mdrd eGFR"
+label var sex "male=1 female=0"
+label var age "age in years at time of sample"
+
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 2 - LOOP FOR AKI FLAGS
+******************************************************************************************************
+
+
+*LOOP FORMATION FOR COMPARING EACH TEST WITH PREVIOUS TESTS
+
+****CREATE A MARKER VARIABLE FOR EACH TIME AKI EALERT CRITERIA SATISFIED
+***AKIgroups
+
+gen newAKI=0
+gen AKImonth=0
+gen AKIyear=0
+gen AKIweek=0
+gen AKIday=0
+
+sum protagonist, detail
+
+
+
+***LOOP for 790 values - PLEASE SUBSTITUTE 790 WITH MAXIMUM VALUE OF "PROTAGONIST" IN YOUR DATASET. CHECK AND DO THIS MANUALLY.
+
+forvalues x=1/790 {
+display `x'
+*indicates progress through the loop
+
+bysort studyid (dos): gen mightydate=dos if protagonist==`x'
+bysort studyid (dos): egen protagonistdos=max(mightydate)
+
+bysort studyid (dos): gen yearmarker=1 if ((protagonistdos-dos)<=365 & (protagonistdos-dos)>90 )
+bysort studyid (dos): gen weekmarker=1 if ((protagonistdos-dos)<=7 & (protagonistdos-dos)>=0 )
+bysort studyid (dos): gen monthmarker=1 if ((protagonistdos-dos)<=90 & (protagonistdos-dos)>7 )
+bysort studyid (dos): gen daymarker=1 if ((protagonistdos-dos)<=2 & (protagonistdos-dos)>=0 )
+
+*marks the dates of blood tests that fit the ealert AKI windows or those for sensitivity analysis
+
+bysort studyid (dos): gen yearvalue=stcreat if (yearmarker==1 )
+bysort studyid (dos): gen weekvalue=stcreat if (weekmarker==1 )
+bysort studyid (dos): gen monthvalue=stcreat if (monthmarker==1 )
+bysort studyid (dos): gen dayvalue=stcreat if (daymarker==1 )
+
+***finds the appropriate creatinine within these windows, excludes missing creatinines which would all be exceptionally high
+
+bysort studyid (dos): egen yearmedian= median(yearvalue)
+bysort studyid (dos): egen weekmin= min(weekvalue)
+bysort studyid (dos): egen monthmedian= median(monthvalue)
+bysort studyid (dos): egen daymin= min(dayvalue)
+
+***applies the optimal reference creatinine across all patient samples
+
+bysort studyid (dos): gen mightyvalue= stcreat if protagonist==`x'
+bysort studyid (dos): egen protagonistvalue= max(mightyvalue)
+***finds the index (investigated) creatinine of key interest, applies this value across all patient samples
+
+replace AKIyear=1 if (protagonistvalue/yearmedian)>=1.5 & protagonist==`x' & !missing(yearmedian) & missing(monthmedian)
+*year AKI can ONLY be tested if there is not a monthmedian already available for the sample, thus monthmedian sample needs to be missing before looking back further
+replace AKIweek=1 if (protagonistvalue/weekmin)>=1.5 & protagonist==`x' & !missing(weekmin)
+replace AKIday=1 if (protagonistvalue-daymin)>26 & protagonist==`x' & !missing(daymin)
+replace AKImonth=1 if (protagonistvalue/monthmedian)>=1.5 & protagonist==`x' & !missing(monthmedian)
+
+*** flags samples meeting AKI criteria, (!missing option is vital)
+drop mightydate protagonistdos yearmarker weekmarker daymarker monthmarker yearvalue weekvalue monthvalue dayvalue yearmedian weekmin monthmedian daymin mightyvalue protagonistvalue
+}
+*END OF LOOP, HAVE NOW FLAGGED ALL TESTS MEETING EACH TYPE OF AKI CONDITION
+
+***DEVELOP COMBINED GROUPS AND MARK FIRST AKI
+replace newAKI=1 if (AKIyear==1 |  AKIweek==1 | AKIday==1 | AKImonth==1)
+
+label var newAKI "AKI blood test"
+label var AKImonth  "AKI blood test for 8-90 days"
+label var AKIyear  "AKI blood test for 91-365 days"
+label var AKIweek  "AKI blood test for 0-7 days"
+label var AKIday  "AKI blood test for 0-2 days"
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 3 - PROCESSING OF AKI FLAGS
+******************************************************************************************************
+
+
+*DIVIDE AKI INTO 90 DAY SESSIONS (UP TO TEN)
+bysort studyid newAKI (dos): gen AKIcounter=1 if newAKI==1
+forvalues x=1/10 {
+display `x'
+bysort studyid AKIcounter: egen counterdate = min(dos) if AKIcounter==`x'
+replace AKIcounter =(`x'+1) if (dos - 90) > counterdate &  AKIcounter==`x'
+drop counterdate
+}
+
+*first gave an akicounter value of 1 to all AKI blood tests
+*next added +1 to aki counter if the date of the sample was >90 days after the first sample with an akicounter value of 1
+*next added +1 to aki counter if the date of the sample was >90 days after the first sample with an akicounter value of 2
+*repeated this for up to 10 episodes (or 10 90 day AKI periods, which equates to 2.5 years of "constant AKI" if a person is unfortunate)
+
+*ADD A CUMULATIVE AKI SPELL COUNT TO EACH BLOOD TEST WITHIN A 90 DAY EPISODE
+bysort studyid AKIcounter (dos): gen AKIspellcounter=_n if AKIcounter!=.
+
+***MARK FIRST AKI IN 2003 AND ITS CONSTITUENT PARTS (YOU NEED THE SPELLCOUNTER VARIABLE AS SOME EPISODES OVERLAP FROM 2002)
+*THE IDEA HERE IS TO FLAG UP THE FIRST 2003 AKI EPISODE AND NOT ANY EARLIER EPISODES THAT HAPPENED 2000-2002 (THEY ARE ONLY RELEVANT IN THAT THEY ARE PRIOR EPISODES FOR COUNTING)
+bysort studyid newAKI AKIspellcounter yr3 (dos):gen firstAKI=1 if (_n==1 & newAKI==1 & AKIspellcounter==1  & yr3==1)
+bysort studyid AKIyear AKIspellcounter yr3 (dos):gen markerfirstAKIyear=1 if (_n==1 & AKIyear==1 & firstAKI==1 & AKIspellcounter==1 & yr3==1)
+bysort studyid AKIweek AKIspellcounter yr3 (dos):gen markerfirstAKIweek=1 if (_n==1 & AKIweek==1 & firstAKI==1 & AKIspellcounter==1  & yr3==1)
+bysort studyid AKIday AKIspellcounter yr3 (dos):gen markerfirstAKIday=1 if (_n==1 & AKIday==1 & firstAKI==1 & AKIspellcounter==1  & yr3==1)
+bysort studyid AKImonth AKIspellcounter yr3 (dos):gen markerfirstAKImonth=1 if (_n==1 & AKImonth==1  & firstAKI==1 & AKIspellcounter==1  & yr3==1)
+*CREATES A NEW VARIABLE FOR EACH TYPE OF AKI EPISODE WHICH IS THE FIRST AKI OCCURENCE FOR EACH PATIENT IN 2003 IF IT IS ALSO THE FIRST AKI OF CRITERION TYPE
+*note if you leave out the "_n" then it takes the first sample "spell" from EACH AKI "episode" in 2003 rather than only the first AKI episode
+
+count if markerfirstAKIyear==1 | markerfirstAKIweek==1 | markerfirstAKIday==1 | markerfirstAKImonth==1
+count if firstAKI==1
+*CHECK THAT THESE TWO VALUES GIVE THE SAME RESULT
+
+
+label var AKIcounter "AKI episode counter starting from 2000"
+label var AKIspellcounter "nth AKI blood test within each AKI episode"
+label var firstAKI "first AKI in 2003 first test that meets any AKI criteria"
+label var markerfirstAKIyear " first AKI in 2003 first test that meets the 91-365d criteria - can be more than 1 criterion"
+label var markerfirstAKIweek " first AKI in 2003 first test that meets the 0-7d criteria - can be more than 1 criterion"
+label var markerfirstAKIday " first AKI in 2003 first test that meets the 0-2d criteria - can be more than 1 criterion"
+label var markerfirstAKImonth " first AKI in 2003 first test that meets the 8-90d criteria - can be more than 1 criterion"
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 4 - COPYING AKI FLAGS TO ALL SAMPLES SO CAN HANDLE AKI AT A PATIENT LEVEL
+******************************************************************************************************
+
+****CREATING A LIST OF AKI PATIENTS TO MERGE
+by studyid: egen newAKIyn=max(firstAKI)
+recode newAKIyn .=0
+
+*** THIS TAKES ALL THE AKI EPISODES AND COPIES THE FIRST MARKER ONTO ALL BLOOD RESULTS FOR EACH PATIENT
+by studyid: egen AKIyearyn=max(markerfirstAKIyear)
+by studyid: egen AKIweekyn=max(markerfirstAKIweek)
+by studyid: egen AKIdayyn=max(markerfirstAKIday)
+by studyid: egen AKImonthyn=max(markerfirstAKImonth)
+recode AKIyearyn .=0
+recode AKIweekyn .=0
+recode AKIdayyn .=0
+recode AKImonthyn .=0
+
+
+
+***CREATES GROUPS WHO HAVE AKI IN 2003 AND THE CRITERIA PRESENT ON FIRST PRESENTATION 
+*(NOTE THEY COULD LATER TRIGGER OTHER CRITERIA THAT ARE NOT THERE ON FIRST PRESENTATION - THIS IS NOT REPRESENTED IN THE CODE).
+
+label var newAKIyn "person with at least one AKI blood test"
+label var AKIyearyn "AKI patient who first presented on 91-365d criteria - can be more than 1"
+label var AKIweekyn "AKI patient who first presented on 0-7d criteria - can be more than 1"
+label var AKIdayyn "AKI patient who first presented on 0-2d criteria - can be more than 1"
+label var AKImonthyn "AKI patient who first presented on 8-90d criteria - can be more than 1"
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 5 - FIRST AKI EVENT DATE VALUE LOCATION
+******************************************************************************************************
+
+***LOOKING AT FIRST AKI DETAILS (YOU CAN ADD OTHER VARIABLES TO THIS LIST IF THERE IS SOMETHING ELSE AT PRESENTATION THAT INTERESTS YOU)
+*FOR ANY AKI
+gen firstAKIdate=dos if firstAKI==1
+gen firstAKIvalue=stcreat if firstAKI==1
+gen firstAKIlocation=location_code if firstAKI==1
+bysort studyid: egen AKIdos=max(firstAKIdate)
+bysort studyid: egen AKIvalue=max(firstAKIvalue)
+bysort studyid: egen AKIlocation=max(firstAKIlocation)
+label var AKIdos "Date of first AKI"
+format AKIdos %d
+label var AKIvalue "Value first AKI"
+label var AKIlocation "AKI sample location"
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 6 - BASELINE AND REFERENCE CREATININE AND DATE COPIED TO ALL SAMPLES
+******************************************************************************************************
+
+
+******LOOKING AT REFERENCES AND BASELINE VALUES
+
+*** BASELINE WILL BE THE LOWEST AVAILABLE REFERENCE VALUE ON THE FIRST DIAGNOSIS DATE FOR FIRST EPISODE IN 2003
+*This has been coded here as the lowest in last 7 days, or the median in 90 days if that is lower, or the median in one year if there were no 90 day tests and the one year is lower than the one week reference.
+*BEWARE, the date for reference creatinine is MEANINGLESS given that a median is taken for longer lookbacks. Just for info, not recommended for use in clinical study.
+
+***WEEK BASELINE (in all)
+bysort studyid  (newAKIyn dos): gen weekmarker=1 if (AKIdos-dos)<=7 & (AKIdos-dos)>0  & newAKIyn==1
+bysort studyid weekmarker (dos): gen weekvalue=stcreat if (weekmarker==1)
+bysort studyid  (dos): egen weekrefvalue= min(weekvalue)
+bysort studyid weekmarker (dos): gen weekgfr=mdrd if (weekmarker==1)
+bysort studyid  (dos): egen weekrefgfr= max(weekgfr)
+bysort studyid  (dos): gen weekrefdos=dos if weekrefvalue==stcreat & weekmarker==1
+bysort studyid: egen AKIdosweek=max(weekrefdos)
+bysort studyid: egen AKIvalueweek=max(weekrefvalue)
+bysort studyid: egen AKIgfrweek=max(weekrefgfr)
+
+label var AKIdosweek "AKI 7d ref date"
+label var AKIvalueweek "AKI 7d ref value"
+label var AKIgfrweek "AKI 7d ref mdrd gfr"
+
+***90d BASELINE (in all)
+bysort studyid (newAKIyn dos): gen monthmarker=1 if (AKIdos-dos)<=90 & (AKIdos-dos)>7 & newAKIyn==1
+bysort studyid monthmarker (dos): gen monthvalue=stcreat if (monthmarker==1)
+bysort studyid (dos): egen monthrefvalue= median(monthvalue)
+bysort studyid monthmarker (dos): gen monthgfr=mdrd if (monthmarker==1)
+bysort studyid (dos): egen monthrefgfr= median(monthgfr)
+bysort studyid (dos): gen deltamonthrefvalue=((monthrefvalue-stcreat)^2) if monthmarker==1
+bysort studyid (dos): egen deltamonthref= min(deltamonthrefvalue)
+bysort studyid (dos): gen monthrefdos=dos if deltamonthref==deltamonthrefvalue & monthmarker==1
+bysort studyid: egen AKIdosmonth=max(monthrefdos)
+bysort studyid: egen AKIvaluemonth=max(monthrefvalue)
+bysort studyid: egen AKIgfrmonth=max(monthrefgfr)
+
+label var AKIdosmonth "AKI 90d ref date"
+label var AKIvaluemonth "AKI 90d ref value"
+label var AKIgfrmonth "AKI 90d ref mdrd gfr"
+
+**YEAR BASELINE (only for those who trigger required extended lookback due to no results 8-90 days out)
+bysort studyid (newAKIyn dos): gen yearmarker=1 if (AKIdos-dos)<=365 & (AKIdos-dos)>90 & AKIyearyn==1
+*This line has been updated by changing newAKIyn to AKIyearyn to ensure this line only triggers in those that were initially diagnosed on year rather than 90 day criteria
+bysort studyid yearmarker (dos): gen yearvalue=stcreat if (yearmarker==1)
+bysort studyid (dos): egen yearrefvalue= median(yearvalue)
+bysort studyid yearmarker (dos): gen yeargfr=mdrd if (yearmarker==1)
+bysort studyid (dos): egen yearrefgfr= median(yeargfr)
+bysort studyid (dos): gen deltayearrefvalue=((yearrefvalue-stcreat)^2) if yearmarker==1
+bysort studyid (dos): egen deltayearref= min(deltayearrefvalue)
+bysort studyid (dos): gen yearrefdos=dos if deltayearref==deltayearrefvalue & yearmarker==1
+bysort studyid: egen AKIdosyear=max(yearrefdos)
+bysort studyid: egen AKIvalueyear=max(yearrefvalue)
+bysort studyid: egen AKIgfryear=max(yearrefgfr)
+
+label var AKIdosyear "AKI 1yr ref date (no 90d value)"
+label var AKIvalueyear "AKI 1yr ref value (no 90d value)"
+label var AKIgfryear "AKI 1yr ref mdrd gfr (no 90d value)"
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 7 - AKI BASELINE REFERENCE (I'VE CHANGED FROM USING CALCULATED MDRD GFR TO USING REPORTED MDRD GFR BUT EITHER IS POSSIBLE SO I HAVE PROVIDED SOME CODE FOR GFR CONVERSIONS)
+******************************************************************************************************
+
+egen AKIref=rowmin(AKIvalueweek AKIvaluemonth AKIvalueyear)
+egen AKIrefGFR=rowmax(AKIgfrweek AKIgfrmonth AKIgfryear)
+egen refGFRgroup=cut(AKIrefGFR), at(0, 30, 45, 60, 90, 999) label
+
+
+label var AKIref "reference creatinine for first AKI episode in 2003"
+label var refGFRgroup "reference MDRD GFR group 0-30-45-60-90-high"
+label var AKIrefGFR "reference MDRD GFR"
+
+*DEMONSTRATION OF BASELINE eGFR
+tab refGFRgroup if firstAKI==1
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 8 - PEAK CREATININE AND DATE COPIED TO ALL SAMPLES
+******************************************************************************************************
+
+***************LOOKING AT PEAKS (HIGHEST CREATININE WITHIN THE NEXT 90 DAYS)
+bysort studyid (dos): gen lookforward90=1 if (dos-AKIdos)>=0 & (dos-AKIdos)<90 & newAKIyn==1
+bysort studyid (dos): gen lookforwardvalue=stcreat if lookforward90==1
+bysort studyid (dos): egen AKIpeakvalue= max(lookforwardvalue)
+bysort studyid (dos): gen peakdos= dos if AKIpeakvalue==lookforwardvalue & lookforward90==1 & newAKIyn==1
+bysort studyid (dos): egen AKIpeakdos= max(peakdos)
+count if AKIvalue<AKIpeakvalue & firstAKI==1 & newAKIyn==1
+count if AKIvalue==AKIpeakvalue & firstAKI==1 & newAKIyn==1
+count if AKIvalue>AKIpeakvalue & firstAKI==1 & newAKIyn==1
+
+label var AKIpeakvalue "highest value in 90d after AKI onset"
+label var AKIpeakdos "date of highest value"
+*COPIED ONTO ALL INCLUDING THE LAST
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 9 - AKI SEVERITY STAGE, HIGHEST IN 90d
+******************************************************************************************************
+
+*AT DIAGNOSIS
+generate akiratio = (AKIvalue/AKIref) if !missing(AKIvalue) & !missing(AKIref)
+generate akirise = (AKIvalue-AKIref) if !missing(AKIvalue) & !missing(AKIref)
+gen AKINdx=1 if newAKIyn==1
+replace AKINdx=2 if akiratio>2 & newAKIyn==1 & !missing(akiratio) & !missing(akirise)
+replace AKINdx=3 if AKIvalue>354 & akiratio>1.5 & newAKIyn==1 & !missing(akiratio) & !missing(akirise)
+replace AKINdx=3 if akiratio>3 & newAKIyn==1 & !missing(akiratio) & !missing(akirise)
+label var AKINdx "AKI severity at diagnosis 1-3"
+
+*AT PEAK
+drop  akiratio akirise
+generate akiratio = (AKIpeakvalue/AKIref) if !missing(AKIpeakvalue) & !missing(AKIref)
+generate akirise = (AKIpeakvalue-AKIref) if !missing(AKIpeakvalue) & !missing(AKIref)
+gen AKIN=1 if newAKIyn==1
+replace AKIN=2 if akiratio>2 & newAKIyn==1 & !missing(akiratio) & !missing(akirise)
+replace AKIN=3 if AKIvalue>354 & akiratio>1.5 & newAKIyn==1 & !missing(akiratio) & !missing(akirise)
+replace AKIN=3 if akiratio>3 & newAKIyn==1 & !missing(akiratio) & !missing(akirise)
+label var AKIN "peak AKI severity within 90d 1-3"
+
+*DEMONSTRATION OF AKI STAGE
+tab AKINdx if firstAKI==1
+tab AKIN if firstAKI==1
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 10 - DEMONSTRATION OF RECURRENCE (NUMBER OF PREVIOUS EPISODES SINCE 01/01/2000, AND EPISODES IN PREVIOUS 1YEAR)
+******************************************************************************************************
+*If first AKI is the nth episode then number of previous episodes is n-1
+gen prevAKIcount = AKIcounter-1
+label var prevAKIcount "number of previous AKI episodes at the time of an AKI episode"
+tab prevAKIcount if firstAKI==1
+
+*or... for AKI episodes in previous year from the index AKI episode
+gen pre1yr=1 if newAKI==1 & dos<AKIdos & (dos+365)>=AKIdos
+bysort studyid: egen priorAKI1yr = max(pre1yr)
+count if priorAKI1yr==1 & firstAKI==1
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 11 - DEMONSTRATION OF NUMBER OF AKI TESTS WITHIN INDEX EPISODE
+******************************************************************************************************
+***Code to count the number of AKI blood tests within the incident AKI episode
+bysort studyid first AKI: gen mark = AKIcounter if firstAKI==1
+bysort studyid: egen mark2 = max(mark)
+bysort studyid: gen mark3 = AKIspellcounter if mark2==AKIcounter
+bysort studyid: egen AKItestcount = max(mark3)
+summ AKItestcount if firstAKI==1, det
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 12 - DEMONSTRATION OF RECOVERY
+******************************************************************************************************
+*Categorised based on the last available creatinine within the 90 day episode. 
+*If no repeat tests done the result is a missing value
+*Otherwise I produce a ratio of recovered value/baseline for AKI patients
+*Ratio>=1.2 would count as non-recovery on the definition I used in my AJKD paper
+
+bysort studyid: gen mark5 = dos if lookforward90==1 & dos!=AKIdos
+bysort studyid: egen mark6 = max(mark5)
+bysort studyid: gen mark7 = stcreat if mark6==dos
+bysort studyid: egen recoveryvalue = max(mark7)
+gen recoveryratio = recoveryvalue/AKIref if firstAKI==1
+
+gen recovery = 0 if recoveryratio>=1.2 & firstAKI==1 & recoveryratio!=.
+replace recovery= 1 if recoveryratio<1.2 & firstAKI==1
+recode recovery .=2 if firstAKI==1
+label define recovery 1 "recovery" 0 "non-recovery" 2 "untested"
+label values recovery recovery
+tab recovery
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 13 - COUNT OF EPISODES RATHER THAN PEOPLE WITH AKI (WITHIN A GIVEN TIMEFRAME - HERE IN 2003)
+******************************************************************************************************
+count if AKIspellcounter==1 & year(dos)==2003
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 14 - COUNTS FOR  (A)  TEST  IN  INDEX  YEAR  (B)  PRIOR  TEST  WITHIN  365D  (C)  7D  (D)  2D  (E)  >=3  TESTS  (F) COUNT OF HOSPITAL TESTS (assuming varible is called hospital_location)
+******************************************************************************************************
+
+*To apply this to a different index year you need to substitute yr3 with a different year
+*Not that the "yr3" variable is generated by the code "gen yr3 if year(dos)==2003)"
+
+bysort  studyid  yr3  (dos):  gen  yr3_n  =  _n  if  yr3==1
+bysort  studyid:  egen  numtest3 = max(yr3_n)
+
+bysort  studyid  (dos):  gen  valid365=1  if  (dos - dos[_n-1] <=365)  &  (dos - dos[_n-1] >0)
+bysort  studyid  (dos):  gen  valid7=1  if  (dos - dos[_n-1] <=7)  &  (dos - dos[_n-1] >0)
+bysort  studyid  (dos):  gen  valid2=1  if  (dos - dos[_n-1] <=2)  &  (dos - dos[_n-1] >0)
+
+gen  yr3_valid365 =   1  if  yr3==1  &  valid365==1
+gen  yr3_valid7 =   1  if  yr3==1  &  valid7==1
+gen  yr3_valid2 =   1  if  yr3==1  &  valid2==1
+bysort  studyid:  egen  yr3_atrisk365 =   max(yr3_valid365)
+bysort  studyid:  egen  yr3_atrisk7 =   max(yr3_valid7)
+bysort  studyid:  egen  yr3_atrisk2 =   max(yr3_valid2)
+count  if  yr3_n==1
+count  if  yr3_n==1  &  yr3_atrisk365==1
+count  if  yr3_n==1  &  yr3_atrisk7==1
+count  if  yr3_n==1  &  yr3_atrisk2==1
+count  if  yr3_n==1  &  numtest12>=3
+
+count if yr3==1
+
+count if yr3==1 & hospital_location==1
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 15 - DESCRIPTION  OF  PEOPLE  WITH  INDEX  TEST  AND  A  PRIOR  TEST  WITHIN  365D
+******************************************************************************************************
+
+egen  agegroup =   cut(age),  at(0,  40,  70,  200)  label
+egen  mdrdgroup= cut(mdrd),  at(0,  30,  45,  60,  90,  250)  label 
+
+tab  sex  if  yr3_n==1  &  yr3_atrisk365==1
+tab  agegroup  if  yr3_n==1  &  yr3_atrisk365==1
+summ  age  if  yr3_n==1  &  yr3_atrisk365==1,  det
+tab  mdrdgroup  if  yr3_n==1  &  yr3_atrisk365==1
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 15 - COUNT  OF  PEOPLE  WITH  NARROW INTERPRETATION KDIGO  AKI  OR  AT  LEAST  ONE  TEST  IN  EACH  CRITERION
+******************************************************************************************************
+
+gen  K3AKI=1  if  (AKIday==1  | AKIweek==1)  &  yr3==1
+bysort  studyid:  egen  KDIGO_yr3=  max(K3AKI)
+count  if  KDIGO_yr3==1  &  yr3_n==1
+*KDIGO AKI WITH RESTRICTED 1 WEEK LOOKBACK
+
+
+gen  K3AKIday=1  if  AKIday==1  &  yr3==1
+bysort  studyid:  egen  KDIGO_yr3day=  max(K3AKIday)
+count  if  KDIGO_yr3day==1  &  yr3_n==1
+*AKI BASED ON 2 DAY LOOKBACK
+
+
+gen  K3AKIweek=1  if  AKIweek==1  &  yr3==1
+bysort  studyid:  egen  KDIGO_yr3week=  max(K3AKIweek)
+count  if  KDIGO_yr3week==1  &  yr3_n==1
+*AKI BASED ON 7 DAY LOOKBACK
+
+
+gen  K3AKImonth=1  if  AKImonth==1  &  yr3==1
+bysort  studyid:  egen  KDIGO_yr3month=  max(K3AKImonth)
+count  if  KDIGO_yr3month==1  &  yr3_n==1
+*AKI BASED ON 8-90 DAY LOOKBACK
+
+
+gen  K3AKIyear=1  if  AKIyear==1  &  yr3==1
+bysort  studyid:  egen  KDIGO_yr3year=  max(K3AKIyear)
+count  if  KDIGO_yr3year==1  &  yr3_n==1
+*AKI BASED ON 91-365 DAY LOOKBACK
+
+
+
+
+
+
+
+******************************************************************************************************
+**** PART 16 - LOCATION OF BLOOD TESTS WITHIN INDEX YEAR AND OF FIRST AKI EPISODE IN INDEX YEAR
+******************************************************************************************************
+
+tab location_code if yr12==1
+tab location_code if firstAKI==1
+
+
+
+
+
+
+
+******************************************************************************************************
+**** END
+***********************************************************************************
