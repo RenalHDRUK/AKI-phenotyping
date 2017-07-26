@@ -3,7 +3,7 @@
 
 |Index	|	|
 |------------- | -------------|
-[What does the Aberdeen AKI phenotyping algorithm code do?](https://github.com/KDatFarr/AKI-phenotyping/blob/master/README.md#what-does-the-aberdeen-aki-phenotyping-algorithm-code-do?)	|1|
+[What does the Aberdeen AKI phenotyping algorithm code do?](#what-does-the-aberdeen-aki-phenotyping-algorithm-code-do)	|1|
 |What prerequisite data are needed?	|1|
 |What are the caveats?	|1|
 |How should my data be organised?	|2|
