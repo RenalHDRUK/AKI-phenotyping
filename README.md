@@ -63,7 +63,6 @@ AKIday 	|	indicates that this test satisfies the 2 day AKI criterion|
 firstAKI |	The first AKI test that meets any AKI criteria for a given individual: “count if firstAKI==1”|
 AKIcounter|	The AKI episode count (number of complete AKI episodes up to that point, including the one in progress): “tab AKIcounter if firstAKI==1”|
 AKIspellcounter |	The AKI duration (number of AKI blood tests up to that point within the episode in progress). Can be used to count the number of AKI episodes in a time period: “count if AKIspellcounter==1 & year(dos)==2003”|
-
 AKIrefGFR|	Reference eGFR for the first AKI episode in the index year for those with at least one AKI episode (combine with “if firstAKI==1 to isolate one result per individual). “sum AKIrefGFR if firstAKI==1”|
 refGFRgroup	|	Categorical version of the reference eGFR|
 AKIN|	AKI episode severity stage for the first AKI episode in the index year for those with at least one AKI episode: “tab AKINdx if firstAKI==1”|
@@ -95,61 +94,60 @@ Please carefully confirm your interpretation of the outputs matches that describ
  
 ## Mock data outputs: dataset details
 
-Output	Patient total	% of total
-Adult serum creatinine samples analysed in index year	864	100
-Number of non-RRT samples in index year	793	91.78
-Number of samples in index year after the duplicate and non-RRT samples removed	746	81.60
-Number of (non rrt) individuals with a creatinine test in index year 	38	100
+|Output|	Patient total|	% of total|
+|------------- | -------------| 
+Adult serum creatinine samples analysed in index year	|864	|100|
+Number of non-RRT samples in index year|	793|	91.78|
+Number of samples in index year after the duplicate and non-RRT samples removed|	746|	81.60|
+Number of (non rrt) individuals with a creatinine test in index year 	38||	100|
 		
-Sex		
-females	19	50
-males	19	50
+|Sex	|Patient total|	% of total|
+|------------- | -------------| 
+females	|19	|50|
+males	|19	|50|
 		
-Age		
-Age ≥70 years	16	42.1
-Age 40-69 years	19	50
-Age 15-39 years	3	7.9
+|Age	|Patient total|	% of total|
+|------------- | -------------| 		
+Age ≥70 years	|16	|42.1|
+Age 40-69 years|	19|	50|
+Age 15-39 years|	3|	7.9|
 		
-First eGFR value recorded (index year, ml/min/1.73m2):
-≥60	29	76.3
-45-59	6	15.8
-30-44	3	7.9
-<30	0	0
+|First eGFR value recorded (index year, ml/min/1.73m2)|Patient total|	% of total|
+|------------- | -------------| 
+≥60	|29	|76.3|
+45-59	|6	|15.8|
+30-44	|3	|7.9|
+<30	|0	|0|
 
  
-Mock data outputs: AKI events and phenotypes
+## Mock data outputs: AKI events and phenotypes
 
-Output	Total people 
-People with AKI detected in index year	22
-	
-Sex	
-females	12
-males	10
-	
-Age	
-Age ≥70 years	10
-Age 40-69 years	10
-Age 15-39 years	2
-	
-AKI severity
-AKI severity stage 1 (First AKI, index year)	18
-AKI severity stage 2 (First AKI, index year)	2
-AKI severity stage 3 (First AKI, index year)	2
-	
-Baseline eGFR (ml/min/1.73m2, first AKI of index year)
-≥60	18
-45-59	4
-30-44	0
-<30	0
-	
-Prior AKI episodes detected in last 3 years
-No prior episodes 	22
-1 prior episode	0
-2 or more prior episodes	0
-	
-Renal recovery	
-To within 20% of baseline function	4
-Non-recovery to baseline	18
-No repeat tests available to determine recovery	6
+|Output	|Total people|
+|------------- | -------------| 
+People with AKI detected in index year	|22|
+Sex	|	|
+females	|12|
+males	|10|
+Age|	|
+Age ≥70 years	|10|
+Age 40-69 years	|10|
+Age 15-39 years	|2|
+AKI severity|	|
+AKI severity stage 1 (First AKI, index year)|	18|
+AKI severity stage 2 (First AKI, index year)|	2|
+AKI severity stage 3 (First AKI, index year)|	2|
+Baseline eGFR (ml/min/1.73m2, first AKI of index year)|	|
+≥60	|18|
+45-59	|4|
+30-44	|0|
+<30	|0|
+Prior AKI episodes detected in last 3 |	|
+No prior episodes |	22|
+1 prior episode|	0|
+2 or more prior episodes|	0|
+Renal recovery	|	|
+To within 20% of baseline function|	4|
+Non-recovery to baseline|	|
+No repeat tests available to determine recovery|	6|
 
 
