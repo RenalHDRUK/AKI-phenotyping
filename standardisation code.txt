@@ -1,0 +1,28 @@
+#The following code is designed to facilitate standardisation for distributed network analysis.
+#A template is provided for ease of use, populated with the mid 2012 population estimates for the UK (Office of National Statistics)
+#Enter your population's data into column 'popage2' of the file 'standardisation.csv', and move this to your working directory
+#To check your working directory type getwd()
+#To change the working directory type setwd(type path here...)
+#e.g. setwd("c:/Users/mqbpjhr4/Documents") 
+
+data<-read.table("standardisation.csv",header=T,sep=",")
+attach(data)
+
+#the events column should contain the number of AKIs occuring within each age range for each gender within the index year
+#popage1 should be the number of people within standard population for each gender and age bracket
+#popage2 should be the number of people within the test data population (not just those with observed events) for each gender and age bracket
+
+as.numeric(c(data$events,data$popage)) #Make sure the continuous variables are seen as numeric by R
+as.factor(c(data$age,data$gender)) #Assign age and gender as categorical factors
+
+#Create a loop to calculate rate by age and gender group (rba) and specific age group rate (agr) for each stratum
+unique(data[,c('age','gender')])
+for (i in 152){ 	
+rba<-data$events/data$popage2
+agr<-rba*data$popage1}
+
+sagr<-sum(agr) #sum the rates for each stratum
+SR<-sagr/sum(popage1)	#divide by the total standard population
+SR*10000 #The outcome is an age and gender standardised rate of AKI incidence per 10,000 people per annum. Change this figure if you wish to change the denominator.
+
+
