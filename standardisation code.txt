@@ -22,7 +22,7 @@ rba<-data$events/data$popage2
 agr<-rba*data$popage1}
 
 sagr<-sum(agr) #sum the rates for each stratum
-SR<-sagr/sum(popage1)	#divide by the total standard population
+SR<-sagr/sum(data$popage1)	#divide by the total standard population
 SR*10000 #The outcome is an age and gender standardised rate of AKI incidence per 10,000 people per annum. Change this figure if you wish to change the denominator.
 
 
