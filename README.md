@@ -3,7 +3,7 @@
 
 |Index	|	|
 |------------- | -------------|
-[What does the Aberdeen AKI phenotyping algorithm code do?](#what-does-the-aberdeen-aki-phenotyping-algorithm-code-do)	|1|
+[What is the Aberdeen AKI phenotyping algorithm code?](#what-is-the-aberdeen-aki-phenotyping-algorithm-code)	|1|
 |[What prerequisite data are needed?](#what-prerequisite-data-are-needed?)	|1|
 |[What are the caveats?](#what-are-the-caveats?)	|1|
 |[How should my data be organised?](#how-should-my-data-be-organised)	|2|
@@ -14,8 +14,8 @@
 |[Mock data outputs: dataset details](#mock-data-outputs-dataset-details)	|6|
 |[Mock data outputs: AKI events and phenotypes](#mock-data-outputs-AKI-events-and-phenotypes)	|7|
 
-## What does the Aberdeen AKI phenotyping algorithm code do?
-The “do” file code flags blood tests that are consistent with AKI based on a comparison with previous tests. It also arranges the flagged tests so that start points of discrete episodes can be identified and each episode can be phenotyped with respect to baseline, severity, recovery and recurrence. 
+## What is the Aberdeen AKI phenotyping algorithm code?
+The code within the “do” file should be used in Stata. It flags blood tests that are consistent with AKI based on a comparison with previous tests. It also arranges the flagged tests so that start points of discrete episodes can be identified and each episode can be phenotyped with respect to baseline, severity, recovery and recurrence. It is freely available to use, but we ask that you reference the accompanying paper "Acute kidney injury in the UK: A replication cohort study of the variation across three regional populations" (http://dx.doi.org/10.1136/bmjopen-2017-019435)
 
 ## What prerequisite data are needed?
 Your dataset should contain as a minimum the following variables named as below:
