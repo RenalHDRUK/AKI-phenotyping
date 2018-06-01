@@ -92,7 +92,7 @@ We strongly recommend that you first use the mock dataset before moving to your 
  
 # Guide to Mock data outputs
 
-Missing creatinine values are present on lines 304 and 379, which should be removed in an initial data cleansing step
+Missing creatinine values are present on lines 304 and 379, which should be removed in an initial data cleaning step
 
 After removing missing creatinine values (stcreat), number of records in the index year (2012) should equal 864
 
